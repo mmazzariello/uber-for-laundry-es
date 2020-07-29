@@ -48,7 +48,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(favicon(path.join(__dirname, 'public', 'images', 'favicon.ico')));
 
 app.use(session({
-  secret: "basic-auth-secret",
+  secret: "never do your own laundry again",
   cookie: {maxAge: 6000},
   store: new MongoStore({
     mongooseConnection: mongoose.connection,
@@ -58,8 +58,16 @@ app.use(session({
   saveUninitialized: true
 }));
 
+app.use((req, res, next) => {
+  if (req.session.currentUser) {
+    res.locals.currentUserInfo = req.session.currentUser;
+    res.locals.isUserLoggedIn = true;
+  } else {
+    res.locals.isUserLoggedIn = false;
+  }
 
-
+  next();
+});
 
 app.use('/', indexRouter);
 app.use('/', authRouter);
