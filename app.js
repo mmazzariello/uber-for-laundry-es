@@ -11,6 +11,9 @@ const favicon = require('serve-favicon');
 const hbs = require('hbs');
 const mongoose = require('mongoose');
 
+const session = require('express-session');
+const MongoStore = require('connect-mongo')(session);
+
 mongoose
   .connect('mongodb://localhost/uber-for-laundry', {
     useNewUrlParser: true,
@@ -26,6 +29,7 @@ mongoose
   });
 
 const indexRouter = require('./routes/index');
+const authRouter = require('./routes/auth');
 
 const app = express();
 
@@ -43,7 +47,22 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(favicon(path.join(__dirname, 'public', 'images', 'favicon.ico')));
 
+app.use(session({
+  secret: "basic-auth-secret",
+  cookie: {maxAge: 6000},
+  store: new MongoStore({
+    mongooseConnection: mongoose.connection,
+    ttl: 24 * 60 * 60 //1 day
+  }),
+  resave: true,
+  saveUninitialized: true
+}));
+
+
+
+
 app.use('/', indexRouter);
+app.use('/', authRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
